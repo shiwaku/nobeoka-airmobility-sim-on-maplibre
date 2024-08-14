@@ -99,8 +99,6 @@
 
     const MODEL_URL = "data/evetol_design_2022.glb"
 
-    let scenegraphLayer, textLayer, overlay;
-
     map.on('load', () => {
       // 標高タイルソース
       map.addSource("gsidem-terrain-rgb", {
@@ -115,43 +113,6 @@
       // 標高タイルセット
       map.setTerrain({ 'source': 'gsidem-terrain-rgb', 'exaggeration': 1 });
 
-      const center = map.getCenter().toArray();
-      const altitude = parseFloat(map.transform.elevation) || 150;
-
-      scenegraphLayer = new deck.ScenegraphLayer({
-        id: "scenegraphLayer",
-        data: [{}],
-        getPosition: () => [center[0], center[1], altitude + 30],
-        getOrientation: [0, -93, 90],
-        scenegraph: MODEL_URL,
-        sizeScale: 10,
-        _lighting: 'pbr',
-        pickable: true,
-        opacity: 1,
-      });
-
-      textLayer = new deck.TextLayer({
-        id: 'textLayer',
-        data: [{}],
-        getPosition: () => [center[0], center[1], altitude + 60],
-        getText: () => `Altitude+30m: ${(altitude + 30).toFixed(1)}m`,
-        getSize: 14,
-        getColor: [255, 255, 255, 255],
-        sizeScale: 1,
-        billboard: true,
-        background: true,
-        getBackgroundColor: [0, 0, 0, 128],
-        backgroundPadding: [2, 2],
-      });
-
-      overlay = new deck.MapboxOverlay({
-        interleaved: true,
-        layers: [scenegraphLayer, textLayer],
-        effects: [lightingEffect],
-      });
-
-      map.addControl(overlay);
-
       // Skyレイヤ
       map.setSky({
         "sky-color": "#199EF3",
@@ -163,93 +124,15 @@
         "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 1, 12, 0]
       });
 
-    });
-
-    map.on('idle', () => {
-      const center = map.getCenter().toArray();
-      const altitude = parseFloat(map.transform.elevation) || 150;
-
-      console.log('中心座標:' + center);
-      console.log('標高:' + altitude + 'm');
-
-      scenegraphLayer.setProps({
-        getPosition: () => [center[0], center[1], altitude + 30]
-      });
-
-      textLayer.setProps({
-        getPosition: () => [center[0], center[1], altitude + 60],
-        getText: () => `Altitude+30m: ${(altitude + 30).toFixed(1)}m`
-      });
-
-      overlay.setProps({
-        layers: [scenegraphLayer, textLayer]
-      });
-    });
-
-    /*
-    // ScenegraphLayerとTextLayerの変数
-    let scenegraphLayer, textLayer;
-
-    // 全てのソースとレイヤーのロードを待つ
-    map.on('idle', () => {
-      const center = map.getCenter().toArray();
-      const altitude = parseFloat(map.transform.elevation) || 150;
-
-      // ScenegraphLayerの初期化
-      scenegraphLayer = new deck.ScenegraphLayer({
-        id: "scenegraphLayer",
-        data: [{}],
-        getPosition: () => {
-          return [center[0], center[1], altitude + 100]; // 標高値+100m
-        },
-        getOrientation: [0, -93, 90],
-        scenegraph: MODEL_URL,
-        sizeScale: 10,
-        _lighting: 'pbr',
-        pickable: true,
-        opacity: 1,
-      });
-
-      // TextLayerの初期化
-      textLayer = new deck.TextLayer({
-        id: 'textLayer',
-        data: [{}],
-        getPosition: () => {
-          return [center[0], center[1], altitude + 170]; // 標高値+170m (70m高く表示)
-        },
-        getText: () => {
-          return `Altitude+100m: ${(altitude + 100).toFixed(1)}m`;
-        },
-        getSize: 14,
-        getColor: [255, 255, 255, 255],
-        sizeScale: 1,
-        billboard: true,
-        background: true,
-        getBackgroundColor: [0, 0, 0, 128],
-        backgroundPadding: [2, 2],
-      });
-
-      // MapboxOverlayの初期化
-      const overlay = new deck.MapboxOverlay({
-        interleaved: true,
-        layers: [scenegraphLayer, textLayer],
-        effects: [lightingEffect],
-      });
-
-      map.addControl(overlay);
-
-      // ScenegraphLayerの更新関数
-      function updateScenegraphLayer() {
+      setTimeout(() => { // map.on('idle'だとレイヤが正常に読み込まれないため、setTimeoutで遅延実行
+        // タイルセットが読み込まれるのを待ってから実行
         const center = map.getCenter().toArray();
         const altitude = parseFloat(map.transform.elevation) || 150;
 
-        // ScenegraphLayerを再生成して更新
-        scenegraphLayer = new deck.ScenegraphLayer({
+        const scenegraphLayer = new deck.ScenegraphLayer({
           id: "scenegraphLayer",
           data: [{}],
-          getPosition: () => {
-            return [center[0], center[1], altitude + 100]; // 標高値+100m
-          },
+          getPosition: () => [center[0], center[1], altitude + 100],
           getOrientation: [0, -93, 90],
           scenegraph: MODEL_URL,
           sizeScale: 10,
@@ -258,16 +141,11 @@
           opacity: 1,
         });
 
-        // TextLayerを再生成して更新
-        textLayer = new deck.TextLayer({
+        const textLayer = new deck.TextLayer({
           id: 'textLayer',
           data: [{}],
-          getPosition: () => {
-            return [center[0], center[1], altitude + 170]; // 標高値+170m (70m高く表示)
-          },
-          getText: () => {
-            return `Altitude+100m: ${(altitude + 100).toFixed(1)}m`;
-          },
+          getPosition: () => [center[0], center[1], altitude + 150],
+          getText: () => `Altitude+100m: ${(altitude + 100).toFixed(1)}m`,
           getSize: 14,
           getColor: [255, 255, 255, 255],
           sizeScale: 1,
@@ -277,21 +155,52 @@
           backgroundPadding: [2, 2],
         });
 
-        // 再生成したレイヤーをセット
-        overlay.setProps({
-          layers: [scenegraphLayer, textLayer]
+        overlay = new deck.MapboxOverlay({
+          interleaved: true,
+          layers: [scenegraphLayer, textLayer],
+          effects: [lightingEffect],
         });
 
-      }
-
-      // マップが移動した後に ScenegraphLayer を更新
-      map.on('move', () => {
-        updateScenegraphLayer();
-      });
+        map.addControl(overlay);
+      }, 1000); // 1秒の遅延を入れる
 
     });
-    */
 
+    // move イベントでレイヤーを更新
+    map.on('move', () => {
+      const center = map.getCenter().toArray();
+      const altitude = parseFloat(map.transform.elevation) || 150;
+
+      const newScenegraphLayer = new deck.ScenegraphLayer({
+        id: "scenegraphLayer",
+        data: [{}],
+        getPosition: () => [center[0], center[1], altitude + 100],
+        getOrientation: [0, -93, 90],
+        scenegraph: MODEL_URL,
+        sizeScale: 10,
+        _lighting: 'pbr',
+        pickable: true,
+        opacity: 1,
+      });
+
+      const newTextLayer = new deck.TextLayer({
+        id: 'textLayer',
+        data: [{}],
+        getPosition: () => [center[0], center[1], altitude + 150],
+        getText: () => `Altitude+100m: ${(altitude + 100).toFixed(1)}m`,
+        getSize: 14,
+        getColor: [255, 255, 255, 255],
+        sizeScale: 1,
+        billboard: true,
+        background: true,
+        getBackgroundColor: [0, 0, 0, 128],
+        backgroundPadding: [2, 2],
+      });
+
+      overlay.setProps({
+        layers: [newScenegraphLayer, newTextLayer]
+      });
+    });
   </script>
 </body>
 
