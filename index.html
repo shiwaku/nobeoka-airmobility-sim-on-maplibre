@@ -99,6 +99,8 @@
 
     const MODEL_URL = "data/evetol_design_2022.glb"
 
+    let overlay;
+
     map.on('load', () => {
       // 標高タイルソース
       map.addSource("gsidem-terrain-rgb", {
