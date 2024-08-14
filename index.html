@@ -7,6 +7,7 @@
   <script src='https://unpkg.com/maplibre-gl@4.5.0/dist/maplibre-gl.js'></script>
   <link href='https://unpkg.com/maplibre-gl@4.5.0/dist/maplibre-gl.css' rel='stylesheet' />
   <script src="https://unpkg.com/pmtiles@2.11.0/dist/index.js"></script>
+  <script src="https://unpkg.com/deck.gl@8.9.0/dist.min.js"></script>
   <style>
     body {
       margin: 0;
@@ -75,31 +76,153 @@
 
     // Attributionを折りたたみ表示
     map.addControl(new maplibregl.AttributionControl({
-      compact: true
+      compact: true,
+      customAttribution: '<a href="https://github.com/shiwaku/nobeoka-airmobility-sim-on-maplibre" target="_blank">GitHub</a> | <a href="https://sketchfab.com/3d-models/evetol-design-2022-bc66affb41cd48aa853d292ae89882a8" target="_blank">EVETOL DESIGN 2022</a> by <a href="https://sketchfab.com/thiago.eveairmobility" target="_blank">EveAir</a> licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC BY 4.0</a>'
     }));
 
     // 3D地形コントロール表示
     map.addControl(
       new maplibregl.TerrainControl({
-        source: 'aist-dem-terrain-rgb',
+        source: 'gsidem-terrain-rgb',
         exaggeration: 1 // 標高を強調する倍率
       })
     );
 
+    // 環境光を作成
+    const ambientLight = new deck.AmbientLight({
+      color: [255, 255, 255],
+      intensity: 3.0
+    });
+
+    // ライティングエフェクトを作成
+    const lightingEffect = new deck.LightingEffect({ ambientLight });
+
+    const MODEL_URL = "data/evetol_design_2022.glb";
+
     map.on('load', () => {
       // 標高タイルソース
-      map.addSource("aist-dem-terrain-rgb", {
+      map.addSource("gsidem-terrain-rgb", {
         type: 'raster-dem',
-        tiles: ['https://gsj-seamless.jp/seamless/elev/php/terrainRGB.php?url='
-          + 'https://tiles.gsj.jp/tiles/elev/mixed/{z}/{y}/{x}.png',
+        tiles: [
+          'https://xs489works.xsrv.jp/raster-tiles/gsi/gsi-dem-terrain-rgb/{z}/{x}/{y}.png',
         ],
-        attribution: '<a href="https://tiles.gsj.jp/tiles/elev/tiles.html" target="_blank">産業技術総合研究所 シームレス標高タイル(統合DEM)</a>',
-        tileSize: 256,
-        maxzoom: 17
+        attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html#dem" target="_blank">地理院タイル(標高タイル)</a>',
+        tileSize: 256
       });
 
       // 標高タイルセット
-      map.setTerrain({ 'source': 'aist-dem-terrain-rgb', 'exaggeration': 1 });
+      map.setTerrain({ 'source': 'gsidem-terrain-rgb', 'exaggeration': 1 });
+
+      // MapboxOverlayの初期化
+      const overlay = new deck.MapboxOverlay({
+        interleaved: true,
+        layers: [],
+        effects: [lightingEffect],
+      });
+
+      // ScenegraphLayerとTextLayerの変数
+      let scenegraphLayer, textLayer;
+
+      // 全てのソースとレイヤーのロードを待つ
+      map.on('idle', () => {
+        const center = map.getCenter().toArray();
+        const altitude = parseFloat(map.transform.elevation) || 150;
+
+        // ScenegraphLayerの初期化
+        scenegraphLayer = new deck.ScenegraphLayer({
+          id: "scenegraphLayer",
+          data: [{}],
+          getPosition: () => {
+            return [center[0], center[1], altitude + 30]; // 標高値+30m
+          },
+          getOrientation: [0, -93, 90],
+          scenegraph: MODEL_URL,
+          sizeScale: 5,
+          _lighting: 'pbr',
+          pickable: true,
+          opacity: 1,
+        });
+
+        // TextLayerの初期化
+        textLayer = new deck.TextLayer({
+          id: 'textLayer',
+          data: [{}],
+          getPosition: () => {
+            return [center[0], center[1], altitude + 45]; // 標高値+45m (15m高く表示)
+          },
+          getText: () => {
+            return `Altitude+30m: ${(altitude + 30).toFixed(1)}m`;
+          },
+          getSize: 14,
+          getColor: [255, 255, 255, 255],
+          sizeScale: 1,
+          billboard: true,
+          background: true,
+          getBackgroundColor: [0, 0, 0, 128],
+          backgroundPadding: [2, 2],
+        });
+
+        // MapboxOverlayの初期化
+        const overlay = new deck.MapboxOverlay({
+          interleaved: true,
+          layers: [scenegraphLayer, textLayer],
+          effects: [lightingEffect],
+        });
+
+        map.addControl(overlay);
+
+        // ScenegraphLayerの更新関数
+        function updateScenegraphLayer() {
+          const center = map.getCenter().toArray();
+          const altitude = parseFloat(map.transform.elevation) || 150;
+
+          // ScenegraphLayerを再生成して更新
+          scenegraphLayer = new deck.ScenegraphLayer({
+            id: "scenegraphLayer",
+            data: [{}],
+            getPosition: () => {
+              return [center[0], center[1], altitude + 30]; // 標高値+30m
+            },
+            getOrientation: [0, -93, 90],
+            scenegraph: MODEL_URL,
+            sizeScale: 5,
+            _lighting: 'pbr',
+            pickable: true,
+            opacity: 1,
+          });
+
+          // TextLayerを再生成して更新
+          textLayer = new deck.TextLayer({
+            id: 'textLayer',
+            data: [{}],
+            getPosition: () => {
+              return [center[0], center[1], altitude + 45]; // 標高値+45m (15m高く表示)
+            },
+            getText: () => {
+              return `Altitude+30m: ${(altitude + 30).toFixed(1)}m`;
+            },
+            getSize: 14,
+            getColor: [255, 255, 255, 255],
+            sizeScale: 1,
+            billboard: true,
+            background: true,
+            getBackgroundColor: [0, 0, 0, 128],
+            backgroundPadding: [2, 2],
+          });
+
+          // 再生成したレイヤーをセット
+          overlay.setProps({
+            layers: [scenegraphLayer, textLayer]
+          });
+
+        }
+
+        // マップが移動した後に ScenegraphLayer を更新
+        map.on('move', () => {
+          updateScenegraphLayer();
+        });
+
+      });
 
       // Skyレイヤ
       map.setSky({
