@@ -97,7 +97,7 @@
     // ライティングエフェクトを作成
     const lightingEffect = new deck.LightingEffect({ ambientLight });
 
-    const MODEL_URL = "data/evetol_design_2022.glb";
+    const MODEL_URL = "https://shiwaku.github.io/nobeoka-airmobility-sim-on-maplibre/data/evetol_design_2022.glb";
 
     map.on('load', () => {
       // 標高タイルソース
@@ -113,13 +113,6 @@
       // 標高タイルセット
       map.setTerrain({ 'source': 'gsidem-terrain-rgb', 'exaggeration': 1 });
 
-      // MapboxOverlayの初期化
-      const overlay = new deck.MapboxOverlay({
-        interleaved: true,
-        layers: [],
-        effects: [lightingEffect],
-      });
-
       // ScenegraphLayerとTextLayerの変数
       let scenegraphLayer, textLayer;
 
@@ -133,11 +126,11 @@
           id: "scenegraphLayer",
           data: [{}],
           getPosition: () => {
-            return [center[0], center[1], altitude + 30]; // 標高値+30m
+            return [center[0], center[1], altitude + 100]; // 標高値+100m
           },
           getOrientation: [0, -93, 90],
           scenegraph: MODEL_URL,
-          sizeScale: 5,
+          sizeScale: 10,
           _lighting: 'pbr',
           pickable: true,
           opacity: 1,
@@ -148,10 +141,10 @@
           id: 'textLayer',
           data: [{}],
           getPosition: () => {
-            return [center[0], center[1], altitude + 45]; // 標高値+45m (15m高く表示)
+            return [center[0], center[1], altitude + 170]; // 標高値+170m (70m高く表示)
           },
           getText: () => {
-            return `Altitude+30m: ${(altitude + 30).toFixed(1)}m`;
+            return `Altitude+100m: ${(altitude + 100).toFixed(1)}m`;
           },
           getSize: 14,
           getColor: [255, 255, 255, 255],
@@ -181,11 +174,11 @@
             id: "scenegraphLayer",
             data: [{}],
             getPosition: () => {
-              return [center[0], center[1], altitude + 30]; // 標高値+30m
+              return [center[0], center[1], altitude + 100]; // 標高値+100m
             },
             getOrientation: [0, -93, 90],
             scenegraph: MODEL_URL,
-            sizeScale: 5,
+            sizeScale: 10,
             _lighting: 'pbr',
             pickable: true,
             opacity: 1,
@@ -196,10 +189,10 @@
             id: 'textLayer',
             data: [{}],
             getPosition: () => {
-              return [center[0], center[1], altitude + 45]; // 標高値+45m (15m高く表示)
+              return [center[0], center[1], altitude + 170]; // 標高値+170m (70m高く表示)
             },
             getText: () => {
-              return `Altitude+30m: ${(altitude + 30).toFixed(1)}m`;
+              return `Altitude+100m: ${(altitude + 100).toFixed(1)}m`;
             },
             getSize: 14,
             getColor: [255, 255, 255, 255],
