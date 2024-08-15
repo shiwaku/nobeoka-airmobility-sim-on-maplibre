@@ -129,7 +129,7 @@
       setTimeout(() => { // map.on('idle'だとレイヤが正常に読み込まれないため、setTimeoutで遅延実行
         // タイルセットが読み込まれるのを待ってから実行
         const center = map.getCenter().toArray();
-        const altitude = parseFloat(map.transform.elevation) || 150;
+        const altitude = parseFloat(map.transform.elevation) || 0; // 標高が取得できない場合は0mとする
 
         const scenegraphLayer = new deck.ScenegraphLayer({
           id: "scenegraphLayer",
@@ -171,7 +171,7 @@
     // move イベントでレイヤーを更新
     map.on('move', () => {
       const center = map.getCenter().toArray();
-      const altitude = parseFloat(map.transform.elevation) || 150;
+      const altitude = parseFloat(map.transform.elevation) || 0; // 標高が取得できない場合は0mとする
 
       const newScenegraphLayer = new deck.ScenegraphLayer({
         id: "scenegraphLayer",
